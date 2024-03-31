@@ -96,11 +96,14 @@ func Start(url string) {
 	header := map[string]string{
 		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
 	}
-	code, err := GetCode(url, client, header)
+	body, h, err := Common.Request(url, client, header)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
+
+	code := GetCode(string(body))
+
 	fmt.Println(code)
 	imgUrl, m3u8Url, err := GetImgAndM3u8Url(uList, Mp4Name, code)
 
@@ -108,19 +111,19 @@ func Start(url string) {
 		log.Fatal(err)
 		return
 	}
-	tsList, err := M3u8List(m3u8Url, client, header)
+	tsList, err := M3u8List(m3u8Url, h)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 	tsUrls := UrlList(m3u8Url, tsList)
 
-	err = GetImage(imgUrl, client, header) //下载封面
+	err = GetImage(imgUrl, h) //下载封面
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	err = GetMp4Slice(tsUrls, tsList, client, header) //下载ts片段
+	err = GetMp4Slice(tsUrls, tsList, h) //下载ts片段
 	if err != nil {
 		log.Fatal(err)
 		return

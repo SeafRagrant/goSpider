@@ -5,19 +5,26 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
-func Request(url string, client *http.Client, header map[string]string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
+type HttpRequest struct {
+	r *http.Request
+	c *http.Client
+}
+
+func (h *HttpRequest) SendRequest(u string) ([]byte, error) {
+	tmp, err := url.Parse(u)
 	if err != nil {
 		return nil, err
 	}
-
-	for k, v := range header {
-		req.Header.Add(k, v)
+	if strings.LastIndex(tmp.Host, ":") > strings.LastIndex(tmp.Host, "]") {
+		tmp.Host = strings.TrimSuffix(tmp.Host, ":")
 	}
+	h.r.URL = tmp
+	h.r.Host = tmp.Host
 
-	resp, err := client.Do(req)
+	resp, err := h.c.Do(h.r)
 	defer resp.Body.Close()
 
 	if err != nil {
@@ -29,6 +36,38 @@ func Request(url string, client *http.Client, header map[string]string) ([]byte,
 		return nil, err
 	}
 	return body, nil
+}
+func (h *HttpRequest) ResetHeader(header map[string]string) {
+	h.r.Header = make(http.Header, len(header))
+	for k, v := range header {
+		h.r.Header.Add(k, v)
+	}
+}
+
+// Request 第一次request时调用该函数， 一般用于获取html主体
+func Request(url string, client *http.Client, header map[string]string) ([]byte, *HttpRequest, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for k, v := range header {
+		req.Header.Add(k, v)
+	}
+
+	resp, err := client.Do(req)
+	defer resp.Body.Close()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	h := &HttpRequest{req, client}
+	if err != nil {
+		return nil, h, err
+	}
+	return body, h, nil
 }
 
 func GetClient() *http.Client {

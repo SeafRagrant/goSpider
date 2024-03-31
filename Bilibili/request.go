@@ -91,18 +91,18 @@ func Start(url string) {
 		"Cookie":     Cookies,
 	}
 	client := Common.GetClient()
-	res, err := Common.Request(url, client, header)
+	body, h, err := Common.Request(url, client, header) //body为页面
 
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		urls := GetVideoUrlAndAudioUrl(string(res))
-		err = DownloadVideoOrAudio("test", urls[1], client, header)
+		urls := GetVideoUrlAndAudioUrl(string(body))
+		err = DownloadVideoOrAudio("test", urls[1], h)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
-	err = DownloadImage("bilibilipic", "https://xxxxxx.jpg", client, header)
+	err = DownloadImage("bilibilipic", "https://xxxxxx.jpg", h)
 	if err != nil {
 		fmt.Println(err)
 	} else {

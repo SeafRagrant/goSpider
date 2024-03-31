@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -12,8 +11,8 @@ import (
 	"strings"
 )
 
-func DownloadImage(name, url string, client *http.Client, header map[string]string) error {
-	res, err := Common.Request(url, client, header)
+func DownloadImage(name, url string, req *Common.HttpRequest) error {
+	res, err := req.SendRequest(url)
 	if err != nil {
 		return err
 	}
@@ -32,8 +31,8 @@ func DownloadImage(name, url string, client *http.Client, header map[string]stri
 	return nil
 }
 
-func DownloadVideoOrAudio(name, url string, client *http.Client, header map[string]string) error {
-	body, err := Common.Request(url, client, header)
+func DownloadVideoOrAudio(name, url string, req *Common.HttpRequest) error {
+	body, err := req.SendRequest(url)
 	if err != nil {
 		return err
 	}

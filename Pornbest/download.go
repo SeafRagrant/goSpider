@@ -5,15 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
 	"spider/Common"
 )
 
-func GetImage(url string, client *http.Client, header map[string]string) error {
-	body, err := Common.Request(url, client, header)
+func GetImage(url string, req *Common.HttpRequest) error {
+	body, err := req.SendRequest(url)
 	if err != nil {
 		return err
 	}
@@ -28,11 +27,11 @@ func GetImage(url string, client *http.Client, header map[string]string) error {
 	return nil
 }
 
-func GetMp4Slice(urls []string, filenames []string, client *http.Client, header map[string]string) error {
+func GetMp4Slice(urls []string, filenames []string, req *Common.HttpRequest) error {
 	n := len(urls)
 	for index, url := range urls {
 		fmt.Printf("下载中...(%d / %d)\n", index+1, n)
-		body, err := Common.Request(url, client, header)
+		body, err := req.SendRequest(url)
 		if err != nil {
 			return err
 		}

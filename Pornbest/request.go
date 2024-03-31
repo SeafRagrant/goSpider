@@ -1,25 +1,19 @@
 package Pornbest
 
 import (
-	"net/http"
 	"regexp"
 	"spider/Common"
 )
 
-func GetCode(url string, client *http.Client, header map[string]string) (string, error) {
-	body, err := Common.Request(url, client, header)
-	if err != nil {
-		return "", err
-	}
-
+func GetCode(content string) string {
 	re := regexp.MustCompile("eval.+")
-	code := re.FindString(string(body))
+	code := re.FindString(content)
 
-	return code, nil
+	return code
 }
 
-func M3u8List(url string, client *http.Client, header map[string]string) ([]string, error) {
-	body, err := Common.Request(url, client, header)
+func M3u8List(url string, req *Common.HttpRequest) ([]string, error) {
+	body, err := req.SendRequest(url)
 	if err != nil {
 		return nil, err
 	}
