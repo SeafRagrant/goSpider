@@ -44,8 +44,15 @@ func (h *HttpRequest) ResetHeader(header map[string]string) {
 	}
 }
 
-// Request 第一次request时调用该函数， 一般用于获取html主体
-func Request(url string, client *http.Client, header map[string]string) ([]byte, *HttpRequest, error) {
+func NewHttpRequest(client *http.Client, header map[string]string) (*HttpRequest, error) {
+	req, err := http.NewRequest("GET", "https://www.baidu.com", nil)
+	if err != nil {
+		return nil, err
+	}
+	return &HttpRequest{req, client}, nil
+}
+
+func request(url string, client *http.Client, header map[string]string) (*http.Request, []byte, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, nil, err
@@ -63,11 +70,29 @@ func Request(url string, client *http.Client, header map[string]string) ([]byte,
 	}
 
 	body, err := io.ReadAll(resp.Body)
-	h := &HttpRequest{req, client}
 	if err != nil {
-		return nil, h, err
+		return nil, nil, err
 	}
-	return body, h, nil
+	return req, body, nil
+}
+
+// Request 只需用到请求结果可使用该函数
+func Request(url string, client *http.Client, header map[string]string) ([]byte, error) {
+	_, body, err := request(url, client, header)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+// RequestAndGetHttpRequest 第一次request时调用该函数， 一般用于获取html主体并且获取 *HttpRequest（用于后续其他请求）
+func RequestAndGetHttpRequest(url string, client *http.Client, header map[string]string) ([]byte, *HttpRequest, error) {
+	req, body, err := request(url, client, header)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return body, &HttpRequest{req, client}, nil
 }
 
 func GetClient() *http.Client {

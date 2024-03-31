@@ -91,7 +91,7 @@ func Start(url string) {
 		"Cookie":     Cookies,
 	}
 	client := Common.GetClient()
-	body, h, err := Common.Request(url, client, header) //body为页面
+	body, h, err := Common.RequestAndGetHttpRequest(url, client, header) //body为页面
 
 	if err != nil {
 		fmt.Println(err)

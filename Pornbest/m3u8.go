@@ -96,7 +96,7 @@ func Start(url string) {
 	header := map[string]string{
 		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
 	}
-	body, h, err := Common.Request(url, client, header)
+	body, h, err := Common.RequestAndGetHttpRequest(url, client, header)
 	if err != nil {
 		log.Fatal(err)
 		return
