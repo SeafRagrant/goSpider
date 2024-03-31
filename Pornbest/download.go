@@ -9,10 +9,11 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"spider/Common"
 )
 
-func GetImage(url string, client *http.Client) error {
-	body, err := Request(url, client)
+func GetImage(url string, client *http.Client, header map[string]string) error {
+	body, err := Common.Request(url, client, header)
 	if err != nil {
 		return err
 	}
@@ -27,11 +28,11 @@ func GetImage(url string, client *http.Client) error {
 	return nil
 }
 
-func GetMp4Slice(urls []string, filenames []string, client *http.Client) error {
+func GetMp4Slice(urls []string, filenames []string, client *http.Client, header map[string]string) error {
 	n := len(urls)
 	for index, url := range urls {
 		fmt.Printf("下载中...(%d / %d)\n", index+1, n)
-		body, err := Request(url, client)
+		body, err := Common.Request(url, client, header)
 		if err != nil {
 			return err
 		}

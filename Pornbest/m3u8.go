@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"spider/Common"
 	"strings"
 )
 
@@ -91,8 +92,11 @@ func Start(url string) {
 	uList := strings.Split(url, "/")
 	Mp4Name := uList[len(uList)-1]
 
-	client := GetClient()
-	code, err := GetCode(url, client)
+	client := Common.GetClientWithProxy()
+	header := map[string]string{
+		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+	}
+	code, err := GetCode(url, client, header)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -104,19 +108,19 @@ func Start(url string) {
 		log.Fatal(err)
 		return
 	}
-	tsList, err := M3u8List(m3u8Url, client)
+	tsList, err := M3u8List(m3u8Url, client, header)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 	tsUrls := UrlList(m3u8Url, tsList)
 
-	err = GetImage(imgUrl, client) //下载封面
+	err = GetImage(imgUrl, client, header) //下载封面
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	err = GetMp4Slice(tsUrls, tsList, client) //下载ts片段
+	err = GetMp4Slice(tsUrls, tsList, client, header) //下载ts片段
 	if err != nil {
 		log.Fatal(err)
 		return
