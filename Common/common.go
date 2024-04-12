@@ -49,6 +49,9 @@ func NewHttpRequest(client *http.Client, header map[string]string) (*HttpRequest
 	if err != nil {
 		return nil, err
 	}
+	for k, v := range header {
+		req.Header.Add(k, v)
+	}
 	return &HttpRequest{req, client}, nil
 }
 

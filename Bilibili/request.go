@@ -11,6 +11,19 @@ var UrlRegexp = regexp.MustCompile("(\"baseUrl\")(.+?)(\"base_url\")")
 
 var Cookies = ""
 
+func GetBVid(content string) string {
+	if content == "" {
+		return content
+	}
+	re := regexp.MustCompile("(\"bvid\":)(.+?)(,)")
+	str := re.FindString(content)
+	if str == "" {
+		return str
+	}
+
+	return str[8 : len(str)-2]
+}
+
 func GetTitle(content string) string {
 	if content == "" {
 		return content
