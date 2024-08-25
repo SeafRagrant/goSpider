@@ -1,14 +1,11 @@
 package Pornbest
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"log"
 	"os"
-	"os/exec"
 	"regexp"
 	"spider/Common"
+	"strconv"
 )
 
 func GetImage(url string, req *Common.HttpRequest) error {
@@ -27,7 +24,8 @@ func GetImage(url string, req *Common.HttpRequest) error {
 	return nil
 }
 
-func GetMp4Slice(urls []string, filenames []string, req *Common.HttpRequest) error {
+// dir可以是绝顶路径也可以是相对路径,最后一级目录只用带目录名，不用加/
+func getTsSlice(urls []string, dir string, req *Common.HttpRequest) error {
 	n := len(urls)
 	for index, url := range urls {
 		fmt.Printf("下载中...(%d / %d)\n", index+1, n)
@@ -35,19 +33,20 @@ func GetMp4Slice(urls []string, filenames []string, req *Common.HttpRequest) err
 		if err != nil {
 			return err
 		}
-		filename := "./Video/" + filenames[index]
+		filename := fmt.Sprintf("%s/%s.ts", dir, strconv.Itoa(index))
 		err = os.WriteFile(filename, body, 0777)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
 	fmt.Println("ts片段下载成功")
 	return nil
 }
 
-func RemoveMp4Slice(filenames []string) error {
-	for _, name := range filenames {
-		err := os.Remove("./Video/" + name)
+func removeTsSlice(dir string, n int) error {
+	for i := 0; i < n; i++ {
+		u := fmt.Sprintf("%s/%s.ts", dir, strconv.Itoa(i))
+		err := os.Remove(u)
 		if err != nil {
 			return err
 		}
@@ -56,39 +55,31 @@ func RemoveMp4Slice(filenames []string) error {
 	return nil
 }
 
-func MergeMp4(name string) error {
-	cmd := exec.Command("cmd", "/C", fmt.Sprintf("copy /b *.ts %s.ts", name))
-	cmd.Dir = "./Video"
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout // 标准输出
-	cmd.Stderr = &stderr // 标准错误
-
-	err := cmd.Run()
+func DownloadVideo(urls []string, name string, dir string, req *Common.HttpRequest) error {
+	err := getTsSlice(urls, dir, req) //下载ts片段
 	if err != nil {
-		return errors.New(string(stderr.Bytes()))
-	}
-	//outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
-	//fmt.Printf("out:\n%s\n err:\n%s\n", outStr, errStr)
-	fmt.Println("ts片段合并成功")
-	return nil
-}
-
-func FfmpegToh264(name string) error {
-	//cmd := exec.Command("ffmpeg", fmt.Sprintf("-i ./%s.ts -c:v libx264 -crf 18 ./%s.mp4", name, name))
-	cmd := exec.Command("ffmpeg", "-i", "./"+name+".ts", "-c:v", "libx264", "-crf", "18", "./"+name+".mp4")
-	cmd.Dir = "./Video"
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout // 标准输出
-	cmd.Stderr = &stderr // 标准错误
-
-	fmt.Println("正在转码...")
-	err := cmd.Run()
-	if err != nil {
-		return errors.New(string(stderr.Bytes()))
+		return err
 	}
 
-	//outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
-	//fmt.Printf("out:\n%s\n err:\n%s\n", outStr, errStr)
-	fmt.Println("ts转码成功")
+	err = Common.MergeTS(name, dir) //将ts片段合成一个ts
+	if err != nil {
+		return err
+	}
+
+	err = removeTsSlice(dir, len(urls)) //删除ts片段
+	if err != nil {
+		return err
+	}
+
+	err = Common.FfmpegToh264(name, dir) //将ts视频转成h264编码的mp4视频
+	if err != nil {
+		return err
+	}
+
+	err = os.Remove(fmt.Sprintf("%s/%s.ts", dir, name)) //删除ts
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

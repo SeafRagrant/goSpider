@@ -123,27 +123,7 @@ func Start(url string) {
 		log.Fatal(err)
 		return
 	}
-	err = GetMp4Slice(tsUrls, tsList, h) //下载ts片段
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	err = MergeMp4(Mp4Name) //将ts片段合成一个ts
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	err = RemoveMp4Slice(tsList) //删除ts片段
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	err = FfmpegToh264(Mp4Name) //将ts视频转成h264编码的mp4视频
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	err = os.Remove("./Video/" + Mp4Name + ".ts")
+	err = DownloadVideo(tsUrls, Mp4Name, "./Video", h) //下载ts片段
 	if err != nil {
 		log.Fatal(err)
 		return

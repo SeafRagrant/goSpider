@@ -1,10 +1,14 @@
 package Common
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"strings"
 )
 
@@ -28,6 +32,7 @@ func (h *HttpRequest) SendRequest(u string) ([]byte, error) {
 	defer resp.Body.Close()
 
 	if err != nil {
+		io.ReadAll(resp.Body)
 		return nil, err
 	}
 
@@ -42,6 +47,14 @@ func (h *HttpRequest) ResetHeader(header map[string]string) {
 	for k, v := range header {
 		h.r.Header.Add(k, v)
 	}
+}
+
+func (h *HttpRequest) SetHeader(key string, value string) {
+	h.r.Header.Set(key, value)
+}
+
+func (h *HttpRequest) ReSetClient() {
+	h.c = &http.Client{}
 }
 
 func NewHttpRequest(client *http.Client, header map[string]string) (*HttpRequest, error) {
@@ -114,4 +127,43 @@ func GetClientWithProxy() *http.Client {
 	return &http.Client{
 		Transport: transport,
 	}
+}
+
+// dir可以是绝顶路径也可以是相对路径,最后一级目录只用带目录名，不用加/
+func MergeTS(name string, dir string) error {
+	cmd := exec.Command("cmd", "/C", fmt.Sprintf("copy /b *.ts %s.ts", name))
+	cmd.Dir = dir
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout // 标准输出
+	cmd.Stderr = &stderr // 标准错误
+
+	err := cmd.Run()
+	if err != nil {
+		return errors.New(string(stderr.Bytes()))
+	}
+	//outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+	//fmt.Printf("out:\n%s\n err:\n%s\n", outStr, errStr)
+	fmt.Println("ts片段合并成功")
+	return nil
+}
+
+// dir可以是绝顶路径也可以是相对路径,最后一级目录只用带目录名，不用加/
+func FfmpegToh264(name string, dir string) error {
+	//cmd := exec.Command("ffmpeg", fmt.Sprintf("-i ./%s.ts -c:v libx264 -crf 18 ./%s.mp4", name, name))
+	cmd := exec.Command("ffmpeg", "-i", "./"+name+".ts", "-c:v", "libx264", "-crf", "18", "./"+name+".mp4")
+	cmd.Dir = dir
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout // 标准输出
+	cmd.Stderr = &stderr // 标准错误
+
+	fmt.Println("正在转码...")
+	err := cmd.Run()
+	if err != nil {
+		return errors.New(string(stderr.Bytes()))
+	}
+
+	//outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+	//fmt.Printf("out:\n%s\n err:\n%s\n", outStr, errStr)
+	fmt.Println("ts转码成功")
+	return nil
 }
